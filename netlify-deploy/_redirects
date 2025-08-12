@@ -1,0 +1,9 @@
+# Netlify redirects for P2P Lending Platform Presentation
+
+# Redirect root to presentation
+/presentation /index.html 200
+/demo /index.html 200
+/slides /index.html 200
+
+# Handle 404s
+/* /index.html 200

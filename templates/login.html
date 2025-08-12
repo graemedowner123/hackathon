@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Login - P2P Lending Platform{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-sign-in-alt"></i> Login to Your Account</h4>
+            </div>
+            <div class="card-body">
+                <!-- Social Login Options -->
+                {% if social_login_urls %}
+                <div class="mb-4">
+                    <h6 class="text-center mb-3">Quick Login with Social Media</h6>
+                    <div class="d-grid gap-2">
+                        {% if social_login_urls.google %}
+                        <a href="{{ social_login_urls.google }}" class="btn btn-danger">
+                            <i class="fab fa-google"></i> Continue with Google
+                        </a>
+                        {% endif %}
+                        
+                        {% if social_login_urls.facebook %}
+                        <a href="{{ social_login_urls.facebook }}" class="btn btn-primary">
+                            <i class="fab fa-facebook-f"></i> Continue with Facebook
+                        </a>
+                        {% endif %}
+                        
+                        {% if social_login_urls.amazon %}
+                        <a href="{{ social_login_urls.amazon }}" class="btn btn-warning">
+                            <i class="fab fa-amazon"></i> Continue with Amazon
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-center my-3">
+                        <span class="text-muted">or</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Traditional Login Form -->
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="remember">
+                        <label class="form-check-label" for="remember">
+                            Remember me
+                        </label>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </div>
+                </form>
+
+                <hr>
+                <div class="text-center">
+                    <p class="mb-2">
+                        <a href="#" class="text-decoration-none">Forgot your password?</a>
+                    </p>
+                    <p class="mb-0">
+                        Don't have an account? <a href="{{ url_for('register') }}" class="text-decoration-none">Register here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

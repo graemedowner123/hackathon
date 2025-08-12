@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Borrower Dashboard - P2P Lending Platform{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-tachometer-alt"></i> Borrower Dashboard</h2>
+            <a href="{{ url_for('request_loan') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Request New Loan
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Total Requests</h5>
+                        <h3>{{ loan_requests|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Funded Loans</h5>
+                        <h3>{{ loan_requests|selectattr("status", "equalto", "funded")|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Active Requests</h5>
+                        <h3>{{ loan_requests|selectattr("status", "equalto", "open")|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list"></i> Your Loan Requests</h5>
+            </div>
+            <div class="card-body">
+                {% if loan_requests %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Amount</th>
+                                <th>Purpose</th>
+                                <th>Term</th>
+                                <th>Max Rate</th>
+                                <th>Status</th>
+                                <th>Bids</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loan in loan_requests %}
+                            <tr>
+                                <td><strong>${{ "%.2f"|format(loan.amount) }}</strong></td>
+                                <td>{{ loan.purpose }}</td>
+                                <td>{{ loan.term_months }} months</td>
+                                <td>{{ loan.max_interest_rate }}%</td>
+                                <td>
+                                    {% if loan.status == 'open' %}
+                                        <span class="badge bg-primary">Open</span>
+                                    {% elif loan.status == 'funded' %}
+                                        <span class="badge bg-success">Funded</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Closed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ loan.bids|length }}</span>
+                                </td>
+                                <td>{{ loan.created_at.strftime('%m/%d/%Y') }}</td>
+                                <td>
+                                    <a href="{{ url_for('loan_details', loan_id=loan.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No loan requests yet</h5>
+                    <p class="text-muted">Create your first loan request to get started.</p>
+                    <a href="{{ url_for('request_loan') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Request Your First Loan
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if loan_requests %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                {% for loan in loan_requests[:5] %}
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <div>
+                        <strong>${{ "%.2f"|format(loan.amount) }}</strong> loan request for {{ loan.purpose }}
+                        <br>
+                        <small class="text-muted">{{ loan.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                    </div>
+                    <div>
+                        {% if loan.bids %}
+                            <span class="badge bg-success">{{ loan.bids|length }} bid(s)</span>
+                        {% else %}
+                            <span class="badge bg-warning">No bids yet</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Home - P2P Lending Platform{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="jumbotron bg-primary text-white p-5 rounded mb-4">
+            <h1 class="display-4">Welcome to P2P Lending</h1>
+            <p class="lead">Connect borrowers with lenders in a competitive marketplace. Get the best rates through our bidding system.</p>
+            <hr class="my-4">
+            <p>Whether you're looking to borrow money or invest in loans, our platform makes it easy and transparent.</p>
+            {% if not current_user.is_authenticated %}
+            <a class="btn btn-light btn-lg me-3" href="{{ url_for('register') }}" role="button">
+                <i class="fas fa-user-plus"></i> Get Started
+            </a>
+            <a class="btn btn-outline-light btn-lg" href="{{ url_for('login') }}" role="button">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+            {% endif %}
+        </div>
+
+        <h2 class="mb-4">How It Works</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">1. Register</h5>
+                        <p class="card-text">Sign up as a borrower or lender with your basic information and financial details.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-hand-holding-usd fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">2. Request or Bid</h5>
+                        <p class="card-text">Borrowers request loans, lenders compete with competitive bids and interest rates.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-handshake fa-3x text-info mb-3"></i>
+                        <h5 class="card-title">3. Connect</h5>
+                        <p class="card-text">Borrowers choose the best offer, and the loan is funded directly between parties.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Recent Loan Requests</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_loans %}
+                    {% for loan in recent_loans %}
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${{ "%.2f"|format(loan.amount) }}</h6>
+                                <p class="mb-1 text-muted small">{{ loan.purpose }}</p>
+                                <small class="text-muted">
+                                    {{ loan.term_months }} months • Max {{ loan.max_interest_rate }}% APR
+                                </small>
+                            </div>
+                            <span class="badge bg-success">{{ loan.bids|length }} bids</span>
+                        </div>
+                        <div class="mt-2">
+                            <a href="{{ url_for('loan_details', loan_id=loan.id) }}" class="btn btn-sm btn-outline-primary">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No recent loan requests.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Platform Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-primary">$2.5M+</h4>
+                        <small class="text-muted">Loans Funded</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">4.2%</h4>
+                        <small class="text-muted">Avg. Interest Rate</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-info">1,200+</h4>
+                        <small class="text-muted">Active Users</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning">98%</h4>
+                        <small class="text-muted">Success Rate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Details - P2P Lending Platform{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-file-alt"></i> Loan Request Details</h4>
+                    {% if loan.status == 'open' %}
+                        <span class="badge bg-primary fs-6">Open for Bids</span>
+                    {% elif loan.status == 'funded' %}
+                        <span class="badge bg-success fs-6">Funded</span>
+                    {% else %}
+                        <span class="badge bg-secondary fs-6">Closed</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h2 class="text-primary">${{ "%.2f"|format(loan.amount) }}</h2>
+                        <p class="text-muted mb-3">Requested Amount</p>
+                        
+                        <div class="mb-3">
+                            <strong>Purpose:</strong> {{ loan.purpose }}<br>
+                            <strong>Term:</strong> {{ loan.term_months }} months<br>
+                            <strong>Maximum Interest Rate:</strong> {{ loan.max_interest_rate }}% APR<br>
+                            <strong>Borrower:</strong> {{ loan.borrower.first_name }} {{ loan.borrower.last_name[0] }}.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Borrower Information</h6>
+                                {% if loan.borrower.credit_score %}
+                                <p class="mb-1"><strong>Credit Score:</strong> {{ loan.borrower.credit_score }}</p>
+                                {% endif %}
+                                {% if loan.borrower.annual_income %}
+                                <p class="mb-1"><strong>Annual Income:</strong> ${{ "{:,.0f}".format(loan.borrower.annual_income) }}</p>
+                                {% endif %}
+                                <p class="mb-0"><strong>Member Since:</strong> {{ loan.borrower.created_at.strftime('%B %Y') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if loan.description %}
+                <div class="mt-3">
+                    <h6>Description:</h6>
+                    <p class="text-muted">{{ loan.description }}</p>
+                </div>
+                {% endif %}
+
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar"></i> Posted: {{ loan.created_at.strftime('%B %d, %Y at %I:%M %p') }}<br>
+                        {% if loan.expires_at %}
+                        <i class="fas fa-clock"></i> Expires: {{ loan.expires_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        {% endif %}
+                    </small>
+                </div>
+
+                {% if current_user.is_authenticated and current_user.user_type == 'lender' and loan.status == 'open' %}
+                <div class="mt-4">
+                    <a href="{{ url_for('place_bid', loan_id=loan.id) }}" class="btn btn-primary">
+                        <i class="fas fa-gavel"></i> Place Bid
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-gavel"></i> Bids ({{ bids|length }})
+                    {% if bids %}
+                        {% if bids %}
+                        <span class="badge bg-info ms-2">Best: {{ "%.1f"|format(bids|dict_min('interest_rate')) }}%</span>
+                        {% endif %}
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if bids %}
+                    {% for bid in bids %}
+                    <div class="border rounded p-3 mb-3 {% if bid.status == 'accepted' %}bid-competitive{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="mb-1">${{ "%.2f"|format(bid.amount) }}</h6>
+                                <p class="mb-1 text-primary"><strong>{{ bid.interest_rate }}% APR</strong></p>
+                                <small class="text-muted">by {{ bid.lender.first_name }} {{ bid.lender.last_name[0] }}.</small>
+                            </div>
+                            <div>
+                                {% if bid.status == 'accepted' %}
+                                    <span class="badge bg-success">Accepted</span>
+                                {% elif bid.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if bid.message %}
+                        <p class="small text-muted mb-2">{{ bid.message }}</p>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ bid.created_at.strftime('%m/%d/%Y %I:%M %p') }}</small>
+                            {% if current_user.is_authenticated and current_user.id == loan.borrower_id and bid.status == 'pending' and loan.status == 'open' %}
+                            <a href="{{ url_for('accept_bid', bid_id=bid.id) }}" class="btn btn-sm btn-success" onclick="return confirm('Are you sure you want to accept this bid? This will close your loan request.')">
+                                <i class="fas fa-check"></i> Accept
+                            </a>
+                            {% endif %}
+                        </div>
+                        
+                        {% if bid.status == 'pending' %}
+                        <div class="mt-2">
+                            {% set monthly_rate = bid.interest_rate / 100 / 12 %}
+                            {% set monthly_payment = bid.amount * (monthly_rate * ((1 + monthly_rate) ** loan.term_months)) / (((1 + monthly_rate) ** loan.term_months) - 1) %}
+                            <small class="text-info">
+                                <i class="fas fa-calculator"></i> Est. Monthly Payment: ${{ "%.2f"|format(monthly_payment) }}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-gavel fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">No bids yet</p>
+                        {% if current_user.is_authenticated and current_user.user_type == 'lender' and loan.status == 'open' %}
+                        <a href="{{ url_for('place_bid', loan_id=loan.id) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Be the first to bid
+                        </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if bids %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Bid Statistics</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        {% if bids %}
+                        <h5 class="text-success">{{ "%.1f"|format(bids|dict_min('interest_rate')) }}%</h5>
+                        {% else %}
+                        <h5 class="text-muted">N/A</h5>
+                        {% endif %}
+                        <small class="text-muted">Best Rate</small>
+                    </div>
+                    <div class="col-6">
+                        {% if bids %}
+                        <h5 class="text-info">{{ "%.1f"|format(bids|dict_avg('interest_rate')) }}%</h5>
+                        {% else %}
+                        <h5 class="text-muted">N/A</h5>
+                        {% endif %}
+                        <small class="text-muted">Avg Rate</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h5 class="text-primary">${{ "%.0f"|format(bids|sum(attribute='amount')) }}</h5>
+                        <small class="text-muted">Total Offered</small>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-warning">{{ bids|length }}</h5>
+                        <small class="text-muted">Total Bids</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="{% if current_user.is_authenticated %}{{ url_for('dashboard') }}{% else %}{{ url_for('index') }}{% endif %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+{% endblock %}

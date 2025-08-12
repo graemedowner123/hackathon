@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Registration - P2P Lending Platform{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-user-plus"></i> Complete Your Registration</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    Welcome! We've received your information from {{ social_data.provider }}. 
+                    Please complete your registration to start using our platform.
+                </div>
+
+                <!-- Display social login info -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6><i class="fas fa-user"></i> Your Information</h6>
+                                <p class="mb-1"><strong>Name:</strong> {{ social_data.first_name }} {{ social_data.last_name }}</p>
+                                <p class="mb-1"><strong>Email:</strong> {{ social_data.email }}</p>
+                                <p class="mb-0"><strong>Provider:</strong> {{ social_data.provider }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        {% if social_data.picture %}
+                        <div class="text-center">
+                            <img src="{{ social_data.picture }}" alt="Profile Picture" 
+                                 class="rounded-circle" style="width: 80px; height: 80px;">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="user_type" class="form-label">I want to:</label>
+                                <select class="form-select" id="user_type" name="user_type" required>
+                                    <option value="">Select your role</option>
+                                    <option value="borrower">Borrow Money</option>
+                                    <option value="lender">Lend Money</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       placeholder="(555) 123-4567">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Borrower-specific fields -->
+                    <div id="borrower-fields" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            As a borrower, please provide additional information to help lenders assess your creditworthiness.
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="credit_score" class="form-label">Credit Score (Optional)</label>
+                                    <input type="number" class="form-control" id="credit_score" name="credit_score" 
+                                           min="300" max="850" placeholder="e.g., 720">
+                                    <div class="form-text">Your credit score helps lenders offer better rates</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="annual_income" class="form-label">Annual Income (Optional)</label>
+                                    <input type="number" class="form-control" id="annual_income" name="annual_income" 
+                                           min="0" step="1000" placeholder="e.g., 50000">
+                                    <div class="form-text">Helps determine loan eligibility</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lender-specific fields -->
+                    <div id="lender-fields" style="display: none;">
+                        <div class="alert alert-success">
+                            <i class="fas fa-chart-line"></i> 
+                            As a lender, you'll be able to browse loan requests and offer competitive rates to borrowers.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="investment_experience" class="form-label">Investment Experience</label>
+                            <select class="form-select" id="investment_experience" name="investment_experience">
+                                <option value="">Select your experience level</option>
+                                <option value="beginner">Beginner (0-2 years)</option>
+                                <option value="intermediate">Intermediate (2-5 years)</option>
+                                <option value="experienced">Experienced (5+ years)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="#" target="_blank">Terms of Service</a> and 
+                                <a href="#" target="_blank">Privacy Policy</a>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check"></i> Complete Registration
+                        </button>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Login
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('user_type').addEventListener('change', function() {
+    const userType = this.value;
+    const borrowerFields = document.getElementById('borrower-fields');
+    const lenderFields = document.getElementById('lender-fields');
+    
+    if (userType === 'borrower') {
+        borrowerFields.style.display = 'block';
+        lenderFields.style.display = 'none';
+    } else if (userType === 'lender') {
+        borrowerFields.style.display = 'none';
+        lenderFields.style.display = 'block';
+    } else {
+        borrowerFields.style.display = 'none';
+        lenderFields.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Request Loan - P2P Lending Platform{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-hand-holding-usd"></i> Request a Loan</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="amount" class="form-label">Loan Amount ($) *</label>
+                                <input type="number" class="form-control" id="amount" name="amount" required min="100" max="100000" step="100">
+                                <div class="form-text">Minimum: $100, Maximum: $100,000</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="term_months" class="form-label">Loan Term (Months) *</label>
+                                <select class="form-select" id="term_months" name="term_months" required>
+                                    <option value="">Select term</option>
+                                    <option value="6">6 months</option>
+                                    <option value="12">12 months</option>
+                                    <option value="18">18 months</option>
+                                    <option value="24">24 months</option>
+                                    <option value="36">36 months</option>
+                                    <option value="48">48 months</option>
+                                    <option value="60">60 months</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="purpose" class="form-label">Loan Purpose *</label>
+                                <select class="form-select" id="purpose" name="purpose" required>
+                                    <option value="">Select purpose</option>
+                                    <option value="Debt Consolidation">Debt Consolidation</option>
+                                    <option value="Home Improvement">Home Improvement</option>
+                                    <option value="Business">Business</option>
+                                    <option value="Education">Education</option>
+                                    <option value="Medical">Medical</option>
+                                    <option value="Auto">Auto</option>
+                                    <option value="Personal">Personal</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max_interest_rate" class="form-label">Maximum Interest Rate (%) *</label>
+                                <input type="number" class="form-control" id="max_interest_rate" name="max_interest_rate" required min="1" max="30" step="0.1">
+                                <div class="form-text">The highest rate you're willing to accept</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Provide additional details about your loan request to help lenders make informed decisions..."></textarea>
+                        <div class="form-text">Optional: Explain how you plan to use the loan and your ability to repay</div>
+                    </div>
+
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="fas fa-info-circle"></i> How it works:</h6>
+                            <ul class="mb-0 small">
+                                <li>Your loan request will be visible to lenders for 7 days</li>
+                                <li>Lenders will compete by offering different interest rates</li>
+                                <li>You can review and accept the best offer</li>
+                                <li>Once accepted, the loan will be funded directly</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="terms" required>
+                        <label class="form-check-label" for="terms">
+                            I understand the terms and conditions of requesting a loan *
+                        </label>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane"></i> Submit Loan Request
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Calculate estimated monthly payment
+document.getElementById('amount').addEventListener('input', calculatePayment);
+document.getElementById('term_months').addEventListener('change', calculatePayment);
+document.getElementById('max_interest_rate').addEventListener('input', calculatePayment);
+
+function calculatePayment() {
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const termMonths = parseInt(document.getElementById('term_months').value) || 0;
+    const interestRate = parseFloat(document.getElementById('max_interest_rate').value) || 0;
+    
+    if (amount > 0 && termMonths > 0 && interestRate > 0) {
+        const monthlyRate = interestRate / 100 / 12;
+        const monthlyPayment = amount * (monthlyRate * Math.pow(1 + monthlyRate, termMonths)) / (Math.pow(1 + monthlyRate, termMonths) - 1);
+        
+        // Show estimated payment
+        let paymentInfo = document.getElementById('payment-info');
+        if (!paymentInfo) {
+            paymentInfo = document.createElement('div');
+            paymentInfo.id = 'payment-info';
+            paymentInfo.className = 'alert alert-info mt-3';
+            document.querySelector('form').appendChild(paymentInfo);
+        }
+        
+        paymentInfo.innerHTML = `
+            <strong>Estimated Monthly Payment:</strong> $${monthlyPayment.toFixed(2)}<br>
+            <small>This is based on your maximum interest rate. Actual payment may be lower if you receive better offers.</small>
+        `;
+    }
+}
+</script>
+{% endblock %}

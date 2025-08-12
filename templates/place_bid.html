@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Place Bid - P2P Lending Platform{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-gavel"></i> Place Your Bid</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Loan Request Summary</h6>
+                                <p class="mb-1"><strong>Amount:</strong> ${{ "%.2f"|format(loan.amount) }}</p>
+                                <p class="mb-1"><strong>Purpose:</strong> {{ loan.purpose }}</p>
+                                <p class="mb-1"><strong>Term:</strong> {{ loan.term_months }} months</p>
+                                <p class="mb-0"><strong>Max Rate:</strong> {{ loan.max_interest_rate }}% APR</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Competition</h6>
+                                <p class="mb-1"><strong>Current Bids:</strong> {{ loan.bids|length }}</p>
+                                {% if loan.bids %}
+                                <p class="mb-0"><strong>Best Rate:</strong> {{ loan.bids|dict_min('interest_rate') }}% APR</p>
+                                {% else %}
+                                <p class="mb-0">No bids yet - be the first!</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" id="bidForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="amount" class="form-label">Bid Amount ($) *</label>
+                                <input type="number" class="form-control" id="amount" name="amount" required 
+                                       min="100" max="{{ loan.amount }}" step="100" value="{{ loan.amount }}">
+                                <div class="form-text">Maximum: ${{ "%.2f"|format(loan.amount) }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="interest_rate" class="form-label">Interest Rate (% APR) *</label>
+                                <input type="number" class="form-control" id="interest_rate" name="interest_rate" required 
+                                       min="1" max="{{ loan.max_interest_rate }}" step="0.1">
+                                <div class="form-text">Maximum: {{ loan.max_interest_rate }}% APR</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message to Borrower</label>
+                        <textarea class="form-control" id="message" name="message" rows="3" 
+                                  placeholder="Optional: Introduce yourself and explain why you're the best choice for this loan..."></textarea>
+                        <div class="form-text">Optional: Help the borrower understand why they should choose your bid</div>
+                    </div>
+
+                    <div id="calculation-result" class="alert alert-info" style="display: none;">
+                        <h6><i class="fas fa-calculator"></i> Loan Calculation</h6>
+                        <div id="calculation-details"></div>
+                    </div>
+
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="fas fa-lightbulb"></i> Bidding Tips:</h6>
+                            <ul class="mb-0 small">
+                                <li>Lower interest rates are more attractive to borrowers</li>
+                                <li>Consider the borrower's credit score and income when setting your rate</li>
+                                <li>A personal message can help your bid stand out</li>
+                                <li>You can only place one bid per loan request</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="terms" required>
+                        <label class="form-check-label" for="terms">
+                            I understand the terms and conditions of lending *
+                        </label>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-gavel"></i> Submit Bid
+                        </button>
+                        <a href="{{ url_for('loan_details', loan_id=loan.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Loan Details
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-user"></i> Borrower Profile</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Name:</strong> {{ loan.borrower.first_name }} {{ loan.borrower.last_name[0] }}.</p>
+                {% if loan.borrower.credit_score %}
+                <p><strong>Credit Score:</strong> 
+                    <span class="badge {% if loan.borrower.credit_score >= 750 %}bg-success{% elif loan.borrower.credit_score >= 650 %}bg-warning{% else %}bg-danger{% endif %}">
+                        {{ loan.borrower.credit_score }}
+                    </span>
+                </p>
+                {% endif %}
+                {% if loan.borrower.annual_income %}
+                <p><strong>Annual Income:</strong> ${{ "{:,.0f}".format(loan.borrower.annual_income) }}</p>
+                {% endif %}
+                <p><strong>Member Since:</strong> {{ loan.borrower.created_at.strftime('%B %Y') }}</p>
+                
+                {% if loan.description %}
+                <hr>
+                <h6>Loan Description:</h6>
+                <p class="small text-muted">{{ loan.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if loan.bids %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-line"></i> Current Competition</h6>
+            </div>
+            <div class="card-body">
+                {% for bid in loan.bids|sort(attribute='interest_rate')[:3] %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong>{{ bid.interest_rate }}% APR</strong><br>
+                        <small class="text-muted">${{ "%.0f"|format(bid.amount) }}</small>
+                    </div>
+                    <small class="text-muted">{{ bid.created_at.strftime('%m/%d') }}</small>
+                </div>
+                {% endfor %}
+                {% if loan.bids|length > 3 %}
+                <small class="text-muted">... and {{ loan.bids|length - 3 }} more</small>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.getElementById('amount').addEventListener('input', calculateLoan);
+document.getElementById('interest_rate').addEventListener('input', calculateLoan);
+
+function calculateLoan() {
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const interestRate = parseFloat(document.getElementById('interest_rate').value) || 0;
+    const termMonths = {{ loan.term_months }};
+    
+    if (amount > 0 && interestRate > 0) {
+        const monthlyRate = interestRate / 100 / 12;
+        const monthlyPayment = amount * (monthlyRate * Math.pow(1 + monthlyRate, termMonths)) / (Math.pow(1 + monthlyRate, termMonths) - 1);
+        const totalPayment = monthlyPayment * termMonths;
+        const totalInterest = totalPayment - amount;
+        
+        const resultDiv = document.getElementById('calculation-result');
+        const detailsDiv = document.getElementById('calculation-details');
+        
+        detailsDiv.innerHTML = `
+            <div class="row">
+                <div class="col-6">
+                    <strong>Monthly Payment:</strong><br>
+                    <span class="text-primary">$${monthlyPayment.toFixed(2)}</span>
+                </div>
+                <div class="col-6">
+                    <strong>Total Interest:</strong><br>
+                    <span class="text-success">$${totalInterest.toFixed(2)}</span>
+                </div>
+            </div>
+            <hr class="my-2">
+            <div class="row">
+                <div class="col-12">
+                    <strong>Total Repayment:</strong> $${totalPayment.toFixed(2)}
+                </div>
+            </div>
+        `;
+        
+        resultDiv.style.display = 'block';
+    } else {
+        document.getElementById('calculation-result').style.display = 'none';
+    }
+}
+
+// Validate bid against competition
+document.getElementById('bidForm').addEventListener('submit', function(e) {
+    const interestRate = parseFloat(document.getElementById('interest_rate').value);
+    const currentBids = {{ loan.bids|length }};
+    
+    {% if loan.bids %}
+    const bestRate = {{ loan.bids|dict_min('interest_rate') }};
+    if (interestRate > bestRate) {
+        if (!confirm(`Your rate of ${interestRate}% is higher than the current best rate of ${bestRate}%. Are you sure you want to submit this bid?`)) {
+            e.preventDefault();
+        }
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

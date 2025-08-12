@@ -73,11 +73,64 @@ def dict_min_filter(items, key):
     """Get minimum value from list of dictionaries by key"""
     if not items:
         return 0
+    
+    values = []
+    for item in items:
+        if key in item:
+            try:
+                values.append(float(item[key]))
+            except (ValueError, TypeError):
+                continue  # Skip invalid values
+    
+    return min(values) if values else 0
+
+@app.template_filter('dict_max')
+def dict_max_filter(items, key):
+    """Get maximum value from list of dictionaries by key"""
+    if not items:
+        return 0
+    
+    values = []
+    for item in items:
+        if key in item:
+            try:
+                values.append(float(item[key]))
+            except (ValueError, TypeError):
+                continue  # Skip invalid values
+    
+    return max(values) if values else 0
+
+@app.template_filter('dict_avg')
+def dict_avg_filter(items, key):
+    """Get average value from list of dictionaries by key"""
+    if not items:
+        return 0
+    
+    values = []
+    for item in items:
+        if key in item:
+            try:
+                values.append(float(item[key]))
+            except (ValueError, TypeError):
+                continue  # Skip invalid values
+    
+    return sum(values) / len(values) if values else 0
+
 @app.template_filter('dict_sum')
 def dict_sum_filter(items, key):
     """Get sum of values from list of dictionaries by key"""
     if not items:
         return 0
+    
+    values = []
+    for item in items:
+        if key in item:
+            try:
+                values.append(float(item[key]))
+            except (ValueError, TypeError):
+                continue  # Skip invalid values
+    
+    return sum(values) if values else 0
 
 @login_manager.user_loader
 def load_user(user_id):

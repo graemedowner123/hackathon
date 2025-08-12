@@ -14,6 +14,18 @@ from dynamodb_models import user_model, loan_model, bid_model, User
 # Import Cognito authentication
 from cognito_auth import CognitoAuth
 
+
+def convert_dynamodb_data(data):
+    """Convert DynamoDB Decimal objects to Python types"""
+    if isinstance(data, list):
+        return [convert_dynamodb_data(item) for item in data]
+    elif isinstance(data, dict):
+        return {key: convert_dynamodb_data(value) for key, value in data.items()}
+    elif isinstance(data, Decimal):
+        return float(data)
+    else:
+        return data
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
 
@@ -61,28 +73,76 @@ def dict_min_filter(items, key):
     """Get minimum value from list of dictionaries by key"""
     if not items:
         return 0
-    return min(item[key] for item in items)
+    
+    values = []
+    for item in items:
+        if key in item:
+            try:
+                values.append(float(item[key]))
+            except (ValueError, TypeError):
+                continue  # Skip invalid values
+    
+    return min(values) if values else 0
 
 @app.template_filter('dict_max')
 def dict_max_filter(items, key):
     """Get maximum value from list of dictionaries by key"""
     if not items:
         return 0
-    return max(item[key] for item in items)
+    
+    values = []
+    for item in items:
+        if key in item:
+            try:
+                values.append(float(item[key]))
+            except (ValueError, TypeError):
+                continue  # Skip invalid values
+    
+    return max(values) if values else 0
 
 @app.template_filter('dict_avg')
 def dict_avg_filter(items, key):
     """Get average value from list of dictionaries by key"""
     if not items:
         return 0
-    return sum(item[key] for item in items) / len(items)
+    
+    values = []
+    for item in items:
+        if key in item:
+            try:
+                values.append(float(item[key]))
+            except (ValueError, TypeError):
+                continue  # Skip invalid values
+    
+    return sum(values) / len(values) if values else 0
+
+
+    
+    values = []
+    for item in items:
+        if key in item:
+            try:
+                values.append(float(item[key]))
+            except (ValueError, TypeError):
+                continue  # Skip invalid values
+    
+    return sum(values) if values else 0
+    try:
+        values = [float(item[key]) for item in items if key in item]
+        return sum(values) if values else 0
+    except (ValueError, TypeError, KeyError):
+        return 0
 
 @app.template_filter('dict_sum')
 def dict_sum_filter(items, key):
     """Get sum of values from list of dictionaries by key"""
     if not items:
         return 0
-    return sum(item[key] for item in items)
+    try:
+        values = [float(item[key]) for item in items if key in item]
+        return sum(values) if values else 0
+    except (ValueError, TypeError, KeyError):
+        return 0
 
 @login_manager.user_loader
 def load_user(user_id):

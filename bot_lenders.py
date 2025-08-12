@@ -185,9 +185,13 @@ class BotLender:
         message = random.choice(messages)
         
         try:
+            # Ensure all values are properly formatted
+            loan_id = str(loan['id'])
+            lender_id = str(self.bot_id)
+            
             bid_id = bid_model.create_bid(
-                loan_request_id=loan['id'],
-                lender_id=self.bot_id,
+                loan_request_id=loan_id,
+                lender_id=lender_id,
                 amount=loan_amount,
                 interest_rate=interest_rate,
                 message=message
@@ -196,11 +200,15 @@ class BotLender:
             if bid_id:
                 self.available_capital -= Decimal(str(loan_amount))
                 self.active_bids.append(bid_id)
-                logger.info(f"{self.name}: Placed bid ${loan_amount} at {interest_rate}% on loan {loan['id']}")
+                logger.info(f"{self.name}: Placed bid ${loan_amount} at {interest_rate}% on loan {loan_id}")
                 return bid_id
+            else:
+                logger.warning(f"{self.name}: Failed to create bid for loan {loan_id}")
             
         except Exception as e:
-            logger.error(f"{self.name}: Error placing bid - {e}")
+            logger.error(f"{self.name}: Error placing bid on loan {loan.get('id', 'unknown')} - {e}")
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
         
         return None
 
@@ -337,6 +345,10 @@ class BotLenderManager:
         try:
             # Get all open loans
             open_loans = loan_model.get_all_open_loans()
+            
+            if not open_loans:
+                logger.debug("No open loans found")
+                return
             
             for loan in open_loans:
                 # Get borrower information
